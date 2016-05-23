@@ -1,0 +1,66 @@
+<?php
+class ChargerFormBuilder extends WireData implements Module {
+
+  protected $event;
+  protected $config_data;
+
+  public static function getModuleInfo(){
+    return array(
+
+    );
+  }
+
+  public function __construct($event){
+    $this->event = $event;
+    // $this->config_data = $this->modules->getModuleConfigData("");
+  }
+
+  public function init(){
+
+  }
+
+  public function ready(){
+
+  }
+
+  public function execute(){
+    if($this->input->post){
+      $charge = new Charge($uploadpage);
+      return $charge->getResults(new NullPage());
+    }
+    return "not a post";
+  }
+
+  public function chargeTab(){
+    $result = $this->execute();
+    // get the form from the event object, return it with new tab appended
+    $form = $this->event->return;
+    $chargepage = $this->event->object->getPage();
+    $uploadpage = $pages->get($chargepage->upload_id);
+    $wrapper = new InputfieldWrapper();
+    // $charge = new Charge($uploadpage);
+    $id = 'AddChargeForm';
+    $title = $this->_('Submit Charge'); // Tab Label: Submit Charge
+    $wrapper->attr('id', $id);
+    $wrapper->attr('title', $title);
+
+    $field = $this->modules->get('InputfieldTextarea');
+    $field->id = "text";
+    $field->name = "text";
+    $field->label = "Charge File Preview";
+    $field->value = $result; //$charge->generateCharge();
+    $wrapper->append($field);
+
+    $button = $this->modules->get('InputfieldSubmit');
+    $button->id = "send_request";
+    $button->name = "send_request";
+    $button->value = "Submit";
+    $button->label = 'Submit Charge';
+    $button->icon = 'dollar';
+    $wrapper->append($button);
+
+    return $wrapper;
+  }
+
+}
+ ?>
