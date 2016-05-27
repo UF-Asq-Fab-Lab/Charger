@@ -26,7 +26,7 @@ class LabChargeItem extends Page {
 	 */
 	public function editUrl() {
 		return str_replace('/page/edit/',
-                       '/charger/lab_charge_items/edit/',
+                       '/lab_charger/lab_charge_items/edit/',
                        parent::editUrl());
 	}
 

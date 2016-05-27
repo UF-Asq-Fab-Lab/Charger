@@ -14,7 +14,7 @@
  * https://github.com/UF-Asq-Fab-Lab
  */
 
-class LabCharges extends PagesType {
+class LabChargeItems extends PagesType {
 
 	protected $labChargeItems = null;
 

@@ -22,6 +22,7 @@ class ProcessLabCharge extends ProcessPageType {
 			'summary'    => __('Manage lab charges', __FILE__), // getModuleInfo summary
 			'permission' => 'user-admin',
 			'icon'       => 'credit-card',
+      'requires'   => array('LabCharger'),
 			'useNavJSON' => true,
 		);
 	}

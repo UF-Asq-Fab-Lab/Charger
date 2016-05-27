@@ -84,7 +84,7 @@ class LabCharger extends WireData implements Module, ConfigurableModule {
   }
 
   public function uninstall () {
-    $this->install(false);
+    $this->installer(false);
   }
 }
  ?>

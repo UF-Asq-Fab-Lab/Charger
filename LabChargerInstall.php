@@ -17,7 +17,7 @@ class LabChargerInstall extends Wire {
     $helper = $this->modules->get('FabLabModuleHelpers');
 
     // create ProcessList page
-    $chargerPage = $helper->getAdminPage('charger', 'ProcessList');
+    $chargerPage = $helper->getAdminPage('lab_charger', 'ProcessList');
 
     // create ProcessLabCharge page
     $labChargesPage = $helper->getAdminPage('lab_charges',
@@ -82,7 +82,7 @@ class LabChargerInstall extends Wire {
     $helper->deleteTemplateByName('lab_charge_item');
     $helper->deletePageByName('lab_charges');
     $helper->deletePageByName('lab_charge_items');
-    $helper->deletePageByName('charger');
+    $helper->deletePageByName('lab_charger');
 
     $labChargerFields = $this->fields->find('name*=lab_charge');
     foreach ($labChargerFields as $lcf) {

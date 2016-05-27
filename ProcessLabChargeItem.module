@@ -13,7 +13,7 @@
  * https://github.com/UF-Asq-Fab-Lab
  */
 
-class ProcessLabCharge extends ProcessPageType {
+class ProcessLabChargeItem extends ProcessPageType {
 
 	static public function getModuleInfo() {
 		return array(
@@ -22,6 +22,7 @@ class ProcessLabCharge extends ProcessPageType {
 			'summary'    => __('Manage lab charge items', __FILE__), // getModuleInfo summary
 			'permission' => 'user-admin',
 			'icon'       => 'cubes',
+      'requires'   => array('LabCharger'), 
 			'useNavJSON' => true,
 		);
 	}

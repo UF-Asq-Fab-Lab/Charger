@@ -1,5 +1,5 @@
 <?php
-class LabChargeConfig extends ModuleConfig {
+class LabChargerConfig extends ModuleConfig {
   public function __construct() {
     $this->add(
     array(

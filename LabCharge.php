@@ -36,7 +36,9 @@ class LabCharge extends Page {
 	 *
 	 */
 	public function editUrl() {
-		return str_replace('/page/edit/', '/charger/lab_charges/edit/', parent::editUrl());
+		return str_replace('/page/edit/',
+                       '/lab_charger/lab_charges/edit/',
+                       parent::editUrl());
 	}
 
 	/**
