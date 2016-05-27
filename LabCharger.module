@@ -1,0 +1,66 @@
+<?php
+class LabCharger extends WireData implements Module ConfigurableModule {
+
+  /**
+	 * Return information about the module
+	 *
+	 */
+	static public function getModuleInfo() {
+		return array(
+			'title' => 'Lab Charger',
+			'version' => 100,
+			'summary' => 'Provides functionality for charging users using their UF student accounts',
+			'author' => 'Thomas R Storey',
+			'autoload' => true,
+			'singular' => true,
+			'installs' => array(
+				'ProcessLabCharge',
+				'ProcessLabChargeItem',
+      ),
+      'requires' => array('FabLabModuleHelpers')
+			);
+	}
+
+  const LabChargeTemplateName = 'lab_charge';
+  const LabChargeItemTemplateName = 'lab_charge_item';
+
+  protected $initialized = false;
+
+  public function __construct() {
+    $this->set('initialized', false);
+    //load classes
+    $dirname = dirname(__FILE__);
+		require_once($dirname . '/LabCharge.php');
+    require_once($dirname . '/LabCharges.php');
+    require_once($dirname . '/LabChargeItem.php');
+    require_once($dirname . '/LabChargeItems.php');
+    //set config placeholders
+    $this->set('labChargesPageID', 0);
+    $this->set('labChargeItemsPageID', 0);
+  }
+
+  public function init() {
+    // prevent possible double init
+		if($this->initialized) return;
+		$this->initialized = true;
+
+    $this->helper = $this->wire('modules')->get('FabLabModuleHelpers');
+
+  }
+
+  protected function installer($install = true) {
+		require_once($this->config->paths->LabCharger . 'LabChargerInstall.php');
+		$installer = new LabChargerInstall();
+		if($install) $installer->install();
+			else $installer->uninstall();
+	}
+
+  public function install () {
+    $this->installer(true);
+  }
+
+  public function uninstall () {
+    $this->install(false);
+  }
+}
+ ?>
