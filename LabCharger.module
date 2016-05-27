@@ -1,0 +1,88 @@
+<?php
+class LabCharger extends WireData implements Module, ConfigurableModule {
+
+  /**
+	 * Return information about the module
+	 *
+	 */
+	static public function getModuleInfo() {
+		return array(
+			'title' => 'Lab Charger',
+			'version' => 100,
+			'summary' => 'Provides functionality for charging users using their UF student accounts',
+			'author' => 'Thomas R Storey',
+			'autoload' => true,
+			'singular' => true,
+			'installs' => array(
+				'ProcessLabCharge',
+				'ProcessLabChargeItem',
+      ),
+      'requires' => array('FabLabModuleHelpers')
+			);
+	}
+
+  const LabChargeTemplateName = 'lab_charge';
+  const LabChargeItemTemplateName = 'lab_charge_item';
+  const LabChargeItemFieldName = 'lab_charge_item';
+
+  protected $initialized = false;
+
+  public function __construct() {
+    $this->set('initialized', false);
+    //load classes
+    $dirname = dirname(__FILE__);
+		require_once($dirname . '/LabCharge.php');
+    require_once($dirname . '/LabCharges.php');
+    require_once($dirname . '/LabChargeItem.php');
+    require_once($dirname . '/LabChargeItems.php');
+    //set config placeholders
+    $this->set('labChargesPageID', 0);
+    $this->set('labChargeItemsPageID', 0);
+  }
+
+  public function init() {
+    // prevent possible double init
+		if($this->initialized) return;
+		$this->initialized = true;
+
+    $this->helper = $this->wire('modules')->get('FabLabModuleHelpers');
+    // create $lab_charges API variable.
+    $labChargeTemplate = $this->templates->get(self::LabChargeTemplateName);
+    if(!$labChargeTemplate) return;
+    if(!$this->labChargesPageID){
+      $selector = 'template=admin, process=ProcessLabCharge, name=lab_charges';
+      $lcp = $this->wire('pages')->get($selector);
+      $this->labChargesPageID = $lcp->id;
+    }
+    $lab_charges = new LabCharges($labChargeTemplate, $this->labChargesPageID);
+    $this->wire('lab_charges', $lab_charges);
+
+    // create $lab_charge_items API variable.
+    $labChargeItemTemplate = $this->templates->get(self::LabChargeItemTemplateName);
+    if(!$labChargeItemTemplate) return;
+    if(!$this->labChargeItemsPageID){
+      $selector = 'template=admin, process=ProcessLabChargeItem, name=lab_charge_items';
+      $lcip = $this->wire('pages')->get($selector);
+      $this->labChargeItemsPageID = $lcip->id;
+    }
+    $lab_charge_items = new LabChargeItems($labChargeItemTemplate, $this->labChargeItemsPageID);
+    $this->wire('lab_charge_items', $lab_charge_items);
+
+  }
+
+  protected function installer($install = true) {
+		require_once($this->config->paths->LabCharger . 'LabChargerInstall.php');
+		$installer = new LabChargerInstall();
+		if($install) $installer->install();
+			else $installer->uninstall();
+	}
+
+  public function install () {
+    $this->installer(true);
+  }
+
+  public function uninstall () {
+    $this->install(false);
+  }
+}
+ ?>
