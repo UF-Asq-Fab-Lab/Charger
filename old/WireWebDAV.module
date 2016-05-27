@@ -1,0 +1,102 @@
+<?php
+/**
+ * A²Fab Lab User Extensions Module
+ *
+ * Developed for the A² Fab Lab at the University of Florida.
+ * Root Module that handles installing, uninstalling and hooking together
+ * the child modules for the Lab User extensions. Login, registration, account
+ * management and applying charges are all covered.
+ *
+ * Thomas R Storey, 2015
+ * Licensed under MIT License, see LICENSE.TXT
+ *
+ * http://fablab.arts.ufl.edu
+ * https://github.com/UF-Asq-Fab-Lab
+ *
+ */
+
+
+
+ class WireWebDAV extends WireData implements Module, ConfigurableModule{
+    protected $settings;
+    protected $client;
+
+    public static function getModuleInfo(){
+      return array(
+        'title' => 'ProcessWire WebDAV Client Module',
+        'summary' => 'PUTS and GETS files to/from a WebDAV server',
+        'version' => 100,
+        'author' => "Thomas R Storey",
+        'autoload' => false,
+        'singular' => false,
+        'permanent' => false
+      );
+    }
+
+    public static function getDefaultConfig(){
+      return array(
+        'webDAVUser' => array(
+          'type' => 'InputfieldText',
+          'value' => 'wdtest',
+          'label' => 'The username for authentication on the webDAV server'
+        ),
+        'webDAVPass' => array(
+          'type' => 'InputfieldPassword',
+          'value' => 'pwd1101', // V!Dn%WNGM9PE
+          'label' => 'The password for authentication on the webDAV server'
+        ),
+        'webDAVUri' => array(
+          'type' => 'InputfieldURL',
+          'value' => 'http://localhost/webdav',
+          'label' => 'base URI for the webDAV server'
+        ),
+        'inboundPath' => array(
+          'type' => 'InputfieldText',
+          'value' => '/prod/Inbound/DCP/UFS',
+          'label' => 'location to upload sent charges to the server'
+        ),
+        'outboundPath' => array(
+          'type' => 'InputfieldText',
+          'value' => '/testfile.txt',
+          'label' => 'location where generated results will be placed on the server'
+        ),
+      );
+    }
+    // XXX: ===================================================
+    private function testAuth ($user, $pass, $url, $path) {
+      $curl = curl_init();
+
+      $curl_options = [
+      CURLOPT_HTTPAUTH => CURLAUTH_ANY,
+      CURLOPT_RETURNTRANSFER => 1,
+      // #CURLOPT_USERPWD => 'user:passwd',
+      // #CURLOPT_URL => '
+      // http://httpbin.org/digest-auth/auth/user/passwd'
+      // ,
+      CURLOPT_USERPWD => $user.":".$pass,
+      CURLOPT_URL => $url.$path,
+      CURLOPT_HEADER => true,
+              CURLOPT_VERBOSE => true
+      ];
+      curl_setopt_array($curl, $curl_options);
+
+      $result = curl_exec($curl);
+      curl_close($curl);
+      return $result;
+    }
+
+    public function ready(){
+      $this->data = $modules->getModuleConfigData($this);
+      $this->settings = array(
+        'baseUri' => $data['webDAVUri'],
+        'userName' => $data['webDAVUser'],
+        'password' => $data['webDAVPass'],
+      );
+    }
+
+    public function getFile($filename){
+
+      return $this->testAuth($this->data['webDAVUser'], $this->data['webDAVPass'], $this->data['webDAVUri'], $this->data['outboundPath']);
+    }
+ }
+ ?>
