@@ -1,9 +1,6 @@
 <?php
-<<<<<<< HEAD
+
 class LabCharger extends WireData implements Module, ConfigurableModule {
-=======
-class LabCharger extends WireData implements Module ConfigurableModule {
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
 
   /**
 	 * Return information about the module
@@ -27,10 +24,7 @@ class LabCharger extends WireData implements Module ConfigurableModule {
 
   const LabChargeTemplateName = 'lab_charge';
   const LabChargeItemTemplateName = 'lab_charge_item';
-<<<<<<< HEAD
   const LabChargeItemFieldName = 'lab_charge_item';
-=======
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
 
   protected $initialized = false;
 
@@ -53,7 +47,7 @@ class LabCharger extends WireData implements Module ConfigurableModule {
 		$this->initialized = true;
 
     $this->helper = $this->wire('modules')->get('FabLabModuleHelpers');
-<<<<<<< HEAD
+
     // create $lab_charges API variable.
     $labChargeTemplate = $this->templates->get(self::LabChargeTemplateName);
     if(!$labChargeTemplate) return;
@@ -75,8 +69,6 @@ class LabCharger extends WireData implements Module ConfigurableModule {
     }
     $lab_charge_items = new LabChargeItems($labChargeItemTemplate, $this->labChargeItemsPageID);
     $this->wire('lab_charge_items', $lab_charge_items);
-=======
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
 
   }
 

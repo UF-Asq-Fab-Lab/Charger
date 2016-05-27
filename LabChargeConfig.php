@@ -13,7 +13,6 @@ class LabChargeConfig extends ModuleConfig {
         'value' => 0,
         'label' => 'ID of parent page for all Lab Charge Item pages.'
       ),
-<<<<<<< HEAD
       'lab_charger_root_id' => array(
         'type' => 'InputfieldInteger',
         'value' => 0,
@@ -33,12 +32,6 @@ class LabChargeConfig extends ModuleConfig {
         'type' => 'InputfieldText',
         'value' => '000240',
         'label' => 'Origin ID for generated lab charge trailer records.'
-=======
-      'charger_root_id' => array(
-        'type' => 'InputfieldInteger',
-        'value' => 0,
-        'label' => 'ID of Charger page, the root for Charger-related pages.'
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
       )
     ));
   }

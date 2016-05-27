@@ -23,7 +23,6 @@ class LabChargerInstall extends Wire {
     $labChargesPage = $helper->getAdminPage('lab_charges',
                                             'ProcessLabCharge',
                                             $chargerPage->id);
-<<<<<<< HEAD
 
     // create lab_charge_item field
     $options = array(
@@ -35,17 +34,12 @@ class LabChargerInstall extends Wire {
       'tags' => 'Charger'
     );
     $lcif = $helper->getField(LabCharger::LabChargeItemFieldName, "FieldtypePage", $options);
-=======
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
     // create LabCharge page template
     $opt = array('tags'=>'Charger', 'datetimeFormat' => 'm/d/Y H:i:s');
     $lcf = array(
       'title'=> array('type'=>'FieldtypeTitle', 'options'=>array()),
-<<<<<<< HEAD
       'lab_charge_item' => array('type'=>'FieldtypePage', 'options'=>$options),
       'lab_charge_reference_number' => array('type'=>'FieldtypeInteger', 'options'=>$opt),
-=======
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
       'lab_charge_amount' => array('type'=>'FieldtypeText', 'options'=>$opt),
       'lab_charge_ufid' => array('type'=>'FieldtypeText', 'options'=>$opt),
       'lab_charge_term' => array('type'=>'FieldtypeText', 'options'=>$opt),
@@ -63,25 +57,15 @@ class LabChargerInstall extends Wire {
     $opt = array('tags'=>'Charger', 'datetimeFormat' => 'm/d/Y H:i:s');
     $lcif = array(
       'title'=> array('type'=>'FieldtypeTitle', 'options'=>array()),
-<<<<<<< HEAD
       'lab_charge_item_type' => array('type'=>'FieldtypeText', 'options'=>$opt)
     );
     $labChargeItemTemplate = $helper->getTemplate(LabCharger::LabChargeItemTemplateName, $lcif, 'Charger');
-=======
-      'lab_charge_item_type' => array('type'=>'FieldtypeFloat', 'options'=>$opt)
-    );
-    $labChargeItemTempalte = $helper->getTemplate(LabCharger::LabChargeItemTemplateName, $lcif, 'Charger');
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
 
     // save config data
     $configData = array(
       'lab_charges_id'=>$labChargesPage->id,
       'lab_charge_items_id'=>$labChargeItemsPage->id,
-<<<<<<< HEAD
       'lab_charger_root_id'=>$chargerPage->id
-=======
-      'charger_root_id'=>$chargerPage->id
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
     );
     $this->wire('modules')->saveModuleConfigData('LabCharger', $configData);
 
@@ -99,11 +83,7 @@ class LabChargerInstall extends Wire {
     $helper->deletePageByName('lab_charges');
     $helper->deletePageByName('lab_charge_items');
     $helper->deletePageByName('charger');
-<<<<<<< HEAD
 
-=======
-
->>>>>>> ec53a2d3bef342b7b85598e7cbfd2e59d861099d
     $labChargerFields = $this->fields->find('name*=lab_charge');
     foreach ($labChargerFields as $lcf) {
       if(!$lcf->numFieldgroups()){
