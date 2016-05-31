@@ -24,10 +24,15 @@ class LabChargerInstall extends Wire {
                                             'ProcessLabCharge',
                                             $chargerPage->id);
 
+    // create LabChargerItems page and process
+    $labChargeItemsPage = $helper->getAdminPage('lab_charge_items',
+                                            'ProcessLabChargeItem',
+                                            $chargerPage->id);
+
     // create lab_charge_item field
     $options = array(
       'derefAsPage' => 1,
-      'parent_id' => $labChargesPage->id,
+      'parent_id' => $labChargeItemsPage->id,
       'labelFieldName' => 'title',
       'inputfield' => 'InputfieldRadios',
       'required' => 1,
@@ -46,12 +51,10 @@ class LabChargerInstall extends Wire {
       'lab_charge_due_date' => array('type'=>'FieldtypeDatetime', 'options'=>$opt),
       'lab_charge_reversal' => array('type'=>'FieldtypeCheckbox', 'options'=>$opt)
     );
-    $labChargeTemplate = $helper->getTemplate(LabCharger::LabChargeTemplateName, $lcf, 'Charger');
+    $templateOptions = array('noChildren' => 1, 'noSettings' => 1);
+    $labChargeTemplate = $helper->getTemplate(LabCharger::LabChargeTemplateName, $lcf, 'Charger', $templateOptions);
 
-    // create LabChargerItems page and process
-    $labChargeItemsPage = $helper->getAdminPage('lab_charge_items',
-                                            'ProcessLabChargeItem',
-                                            $chargerPage->id);
+
 
     // create LabChargeItem page template
     $opt = array('tags'=>'Charger', 'datetimeFormat' => 'm/d/Y H:i:s');
@@ -59,7 +62,7 @@ class LabChargerInstall extends Wire {
       'title'=> array('type'=>'FieldtypeTitle', 'options'=>array()),
       'lab_charge_item_type' => array('type'=>'FieldtypeText', 'options'=>$opt)
     );
-    $labChargeItemTemplate = $helper->getTemplate(LabCharger::LabChargeItemTemplateName, $lcif, 'Charger');
+    $labChargeItemTemplate = $helper->getTemplate(LabCharger::LabChargeItemTemplateName, $lcif, 'Charger', $templateOptions);
 
     // save config data
     $configData = array(

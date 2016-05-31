@@ -36,21 +36,176 @@ class ProcessLabCharge extends ProcessPageType {
 
 	public function init() {
 		parent::init();
+		$this->addHookAfter('ProcessPageAdd::buildForm', $this, 'hookAfterPageAddBuildForm');
+		$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookAfterPageEditBuildForm');
 	}
 
 	protected function useLister() {
 		return true;
 	}
 
-	public function ___executeEdit() {
-
+	public function ___executeAdd() {
+		$out = parent::___executeAdd();
+		return $out;
 	}
 
-  public function __executeSend() {
-    // get ids from input query
-    // construct charge record
-    // send to remote server
-  }
+	public function ___executeEdit() {
+		$out = parent::___executeEdit();
+		return $out;
+	}
+
+	public function __executeSend() {
+		// get ids from input query
+		// construct charge record
+		// send to remote server
+	}
+
+	protected function hookAfterPageAddBuildForm(HookEvent $event){
+		$form = $event->return;
+		$formSave = $form->children('name=submit_save')->first();
+		// item
+		$field = $this->wire('fields')->get('lab_charge_item')->getInputfield(new NullPage());
+		$form->insertBefore($field, $formSave);
+		// amount
+		$field = $this->wire('fields')->get('lab_charge_amount')->getInputfield(new NullPage());
+		$form->insertBefore($field, $formSave);
+		// ufid
+		$field = $this->wire('fields')->get('lab_charge_ufid')->getInputfield(new NullPage());
+		$form->insertBefore($field, $formSave);
+		// ref
+		$field = $this->wire('fields')->get('lab_charge_reference_number')->getInputfield(new NullPage());
+		$field->value = $this->getNextReferenceNumber();
+		$form->insertBefore($field, $formSave);
+		// term
+		$field = $this->wire('fields')->get('lab_charge_term')->getInputfield(new NullPage());
+		$field->value = $this->getCurrentTerm();
+		$form->insertBefore($field, $formSave);
+		// due date
+		$field = $this->wire('fields')->get('lab_charge_due_date')->getInputfield(new NullPage());
+		$field->value = $this->getDueDate();
+		$form->insertBefore($field, $formSave);
+
+		$event->return = $form;
+	}
+
+	protected function hookAfterPageEditBuildForm(HookEvent $event){
+		$form = $event->return;
+		$id = (int) $this->input->post('id');
+		if(!$id) $id = (int) $this->input->get('id');
+		$charge = $this->wire('pages')->get((int) $id);
+
+		$field = wire('modules')->get('InputfieldTextarea');
+		$field->name = 'lab-charge-detail-record';
+		$field->label = 'Lab Charge Detail Record';
+		$field->value = $this->renderDetailRecord($charge).$this->renderTrailerRecord(array($charge));
+		$form->prepend($field);
+
+		$event->return = $form;
+	}
+
+	protected function getNextReferenceNumber(){
+		$labChargesPageID = $this->wire('modules')->getModuleConfigData('LabCharger')['lab_charges_id'];
+		$charges = $this->wire('pages')->find('parent_id='.$labChargesPageID);
+		if(count($charges)){
+			$charges->sort('-lab_charge_reference_number');
+			return $charges->first()->get('lab_charge_reference_number') + 1;
+		} else {
+			// no charges yet
+			return 1;
+		}
+	}
+
+	protected function getCurrentTerm(){
+		$data = $this->wire('modules')->getModuleConfigData('LabCharger');
+		$springStart = $data['lab_charger_spring_start'];
+		$summerStart = $data['lab_charger_summer_start'];
+		$fallStart = $data['lab_charger_fall_start'];
+		$c = substr(date('Y'), 0, 1);
+		$yy = date('y');
+		$now = time();
+		if($now >= $springStart && $now <= $summerStart){
+			// spring
+			$t = 1;
+		} else if($now >= $summerStart && $now <= $fallStart){
+			// summer
+			$t = 5;
+		} else if($now >= $fallStart){
+			// fall
+			$t = 8;
+		} else {
+			return "Error generating term code - please ensure term start dates are configured correctly in the Lab Charger module configuration page.";
+		}
+		return $c.$yy.$t;
+	}
+
+	protected function getDueDate () {
+		$data = $this->wire('modules')->getModuleConfigData('LabCharger');
+		$graceSeconds = $data['lab_charger_grace_period']*86400; //60*60*24
+		return time()+$graceSeconds;
+	}
+
+	private function renderDetailRecord(Page $charge){
+		$chargerConfig = $this->wire('modules')->getModuleConfigData('LabCharger');
+		$item = $charge->lab_charge_item;
+		$detail = "";
+		$acct_type = $chargerConfig['lab_charger_account_type'];
+		$filler = " ";
+		$item_type = $item->lab_charge_item_type;
+		$ufid = $charge->lab_charge_ufid;
+		$amount = $charge->lab_charge_amount;
+		$ref_number = $charge->lab_charge_reference_number;
+		$term = $charge->lab_charge_term;
+		$due_date = date('mdY',$charge->lab_charge_due_date);
+		$reversal = ($charge->lab_charge_reversal) ? "Y" : " " ;
+		$detail.=$acct_type.$filler.$item_type.$ufid;
+		$int_amount = substr($amount, 0, count($amount)-4);
+		$decimal_amount = substr($amount, -3);
+		$amount = str_pad($int_amount, 18, " ", STR_PAD_LEFT).$decimal_amount;
+		$detail.=$amount.str_pad($chargerConfig['lab_charger_reference_code'].str_pad($ref_number, 8, "0", STR_PAD_LEFT), 30, " ", STR_PAD_RIGHT);
+		$detail.=$term.$due_date.$reversal;
+		$detail = str_pad($detail, 120, " ", STR_PAD_RIGHT);
+		return $detail.="\n";
+	}
+
+	private function renderTrailerRecord($charges){
+		$data = $this->wire('modules')->getModuleConfigData('LabCharger');
+		$gt = $data['lab_charger_group_type'];
+		$oid = $data['lab_charger_origin_id'];
+		$datetime = date('m-d-YH:i:s');
+		$numRecs = str_pad(number_format(count($charges), 0, "", ""), 10, " ", STR_PAD_LEFT);
+		$total = 0;
+		foreach ($charges as $charge) {
+			$amount = floatval($charge->get('lab_charge_amount'));
+			$total+=$amount;
+		}
+		$total = number_format($total, 2, ".", "");
+		// $int_total = substr($total, 0, count($total)-4);
+		// $decimal_total = substr($total, -3);
+		$total = str_pad($total, 15, " ", STR_PAD_LEFT);
+		return str_pad($gt.$oid.$datetime.$numRecs.$total, 120, " ", STR_PAD_RIGHT);
+	}
+
+	private function testAuth ($user, $pass, $url, $path) {
+		$curl = curl_init();
+
+		$curl_options = [
+		CURLOPT_HTTPAUTH => CURLAUTH_ANY,
+		CURLOPT_RETURNTRANSFER => 1,
+		// #CURLOPT_USERPWD => 'user:passwd',
+		// #CURLOPT_URL => '
+		// http://httpbin.org/digest-auth/auth/user/passwd'
+		// ,
+		CURLOPT_USERPWD => $user.":".$pass,
+		CURLOPT_URL => $url.$path,
+		CURLOPT_HEADER => true,
+						CURLOPT_VERBOSE => true
+		];
+		curl_setopt_array($curl, $curl_options);
+
+		$result = curl_exec($curl);
+		curl_close($curl);
+		return $result;
+	}
 
 	public function hookPageEditBuildForm(HookEvent $event) {
 

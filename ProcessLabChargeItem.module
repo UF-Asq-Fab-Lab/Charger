@@ -22,7 +22,7 @@ class ProcessLabChargeItem extends ProcessPageType {
 			'summary'    => __('Manage lab charge items', __FILE__), // getModuleInfo summary
 			'permission' => 'user-admin',
 			'icon'       => 'cubes',
-      'requires'   => array('LabCharger'), 
+      'requires'   => array('LabCharger'),
 			'useNavJSON' => true,
 		);
 	}
@@ -43,7 +43,8 @@ class ProcessLabChargeItem extends ProcessPageType {
 	}
 
 	public function ___executeEdit() {
-
+		$out = parent::___executeEdit();
+		return $out;
 	}
 
 	public function hookPageEditBuildForm(HookEvent $event) {
