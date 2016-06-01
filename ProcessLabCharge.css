@@ -1,3 +1,25 @@
 #Inputfield_lab-charge-detail-record{
   font-family: monospace;
 }
+
+#ProcessLabChargeRecordsSpinner {
+  display: none;
+  font-size: 1em;
+  color: #8d939e;
+}
+
+#ProcessLabChargeRecordsText {
+  font-family: monospace;
+}
+
+#ProcessLabChargeRecordsForm {
+  display: none;
+}
+
+#ProcessLabChargeRenderButton {
+  margin-bottom: 10px;
+}
+
+.ProcessLabChargeRecords {
+  margin-bottom: 10px;
+}

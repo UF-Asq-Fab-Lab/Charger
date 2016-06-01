@@ -29,13 +29,15 @@ class ProcessLabCharge extends ProcessPageType {
 
 	public function __construct() {
 		$this->set("maxAjaxQty", 25);
-		return parent::__construct();
+		$this->set('addLabel', $this->_('Create New Charge'));
+		$this->set('jsonListLabel', 'title'); // what to use for 'label' property in JSON nav data
     $showFields = array('title', 'lab_charge_item', 'lab_charge_ufid', 'lab_charge_amount');
 		$this->set('showFields', $showFields);
 	}
 
 	public function init() {
 		parent::init();
+		$this->addHookAfter('ProcessPageLister::execute', $this, 'hookAfterListerExecute');
 		$this->addHookAfter('ProcessPageAdd::buildForm', $this, 'hookAfterPageAddBuildForm');
 		$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookAfterPageEditBuildForm');
 	}
@@ -58,6 +60,59 @@ class ProcessLabCharge extends ProcessPageType {
 		// get ids from input query
 		// construct charge record
 		// send to remote server
+	}
+
+	public function ___executeRender() {
+		if(!$this->wire('config')->ajax) return;
+		$out = "";
+		$ids = implode("|", explode("+", $this->wire('input')->get('ids')));
+		$charges = $this->wire('pages')->find("id=".$ids);
+		foreach ($charges as $charge) {
+			$out .= $this->renderDetailRecord($charge)."\n";
+		}
+		$out .= "\n".$this->renderTrailerRecord($charges);
+		return $out;
+	}
+
+	protected function hookAfterListerExecute(HookEvent $event){
+
+		if($this->wire('config')->ajax) return $event->return;
+
+		$btn = $this->wire('modules')->get('InputfieldButton');
+		$btn->attr('id', 'ProcessLabChargeRenderButton');
+		$btn->attr('value', 'Generate Record File');
+		$btn->attr('disabled', 'disabled');
+		$btn->icon = 'pencil-square-o';
+
+		$spinner = '<span id="ProcessLabChargeRecordsSpinner"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i></span>';
+
+		$form = $this->wire('modules')->get('InputfieldForm');
+		$form->attr('id', 'ProcessLabChargeRecordsForm');
+		$form->method = 'post';
+		$form->action = './';
+		$form->attr('title', 'Lab Charge Records');
+
+		$field = $this->wire('modules')->get('InputfieldTextarea');
+		$field->attr('rows', 10);
+		$field->attr('id', 'ProcessLabChargeRecordsText');
+		$field->attr('name', 'records-text');
+		$field->label = "Record File Text";
+		$form->add($field);
+
+		$field = $this->wire('modules')->get('InputfieldHidden');
+		$field->attr('id', 'ProcessLabChargeRecordsIds');
+		$field->attr('name', 'records-ids');
+		$form->add($field);
+
+		$field = $this->wire('modules')->get('InputfieldSubmit');
+		$field->attr('value', "Send Charge Record");
+		$field->attr('id', 'ProcessLabChargeRecordsSubmit');
+		$field->icon = 'upload';
+		$form->add($field);
+
+		$out = "<div class='ProcessLabChargeRecords'>".$btn->render().$spinner.$form->render()."</div>";
+
+		$event->return = $out.$event->return;
 	}
 
 	protected function hookAfterPageAddBuildForm(HookEvent $event){
@@ -97,7 +152,7 @@ class ProcessLabCharge extends ProcessPageType {
 		$field = wire('modules')->get('InputfieldTextarea');
 		$field->name = 'lab-charge-detail-record';
 		$field->label = 'Lab Charge Detail Record';
-		$field->value = $this->renderDetailRecord($charge).$this->renderTrailerRecord(array($charge));
+		$field->value = $this->renderDetailRecord($charge);
 		$form->prepend($field);
 
 		$event->return = $form;
@@ -164,7 +219,7 @@ class ProcessLabCharge extends ProcessPageType {
 		$detail.=$amount.str_pad($chargerConfig['lab_charger_reference_code'].str_pad($ref_number, 8, "0", STR_PAD_LEFT), 30, " ", STR_PAD_RIGHT);
 		$detail.=$term.$due_date.$reversal;
 		$detail = str_pad($detail, 120, " ", STR_PAD_RIGHT);
-		return $detail.="\n";
+		return $detail;
 	}
 
 	private function renderTrailerRecord($charges){
@@ -183,6 +238,20 @@ class ProcessLabCharge extends ProcessPageType {
 		// $decimal_total = substr($total, -3);
 		$total = str_pad($total, 15, " ", STR_PAD_LEFT);
 		return str_pad($gt.$oid.$datetime.$numRecs.$total, 120, " ", STR_PAD_RIGHT);
+	}
+
+	/**
+	 * Return an array of Lister settings, ready to be populated to Lister
+	 *
+	 * @param ProcessPageLister $lister
+	 * @param string $selector
+	 * @return array
+	 *
+	 */
+	protected function getListerSettings(ProcessPageLister $lister, $selector) {
+		$settings = parent::getListerSettings($lister, $selector);
+		$settings['defaultSort'] = '-created';
+		return $settings;
 	}
 
 	private function testAuth ($user, $pass, $url, $path) {
@@ -205,10 +274,6 @@ class ProcessLabCharge extends ProcessPageType {
 		$result = curl_exec($curl);
 		curl_close($curl);
 		return $result;
-	}
-
-	public function hookPageEditBuildForm(HookEvent $event) {
-
 	}
 
 }
