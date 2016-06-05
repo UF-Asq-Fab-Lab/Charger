@@ -56,19 +56,6 @@ class LabCharge extends Page {
 	}
 
   /**
-	 * Render charge detail string for this charge.
-	 *
-	 * @return string $detail
-	 *
-	 */
-
-  public function renderDetail() {
-    $detail = "";
-    // TODO:
-    return $detail;
-  }
-
-  /**
 	 * Return the API variable used for managing pages of this type
 	 *
 	 * @return Pages|PagesType

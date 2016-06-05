@@ -1,7 +1,34 @@
 $(document).ready(function() {
-	var tableObserver = new MutationObserver(insertCheckboxes);
-  var form = document.getElementById("ProcessListerResults");
-  var options = {childList: true, subtree: true};
+	if(typeof ProcessLister !== 'undefined' && ProcessLister !== null){
+		var tableObserver = new MutationObserver(insertCheckboxes);
+	  var form = document.getElementById("ProcessListerResults");
+	  var options = {childList: true, subtree: true};
+
+		ProcessLister.submit = function(url) {
+			if(ProcessLister.inTimeout) clearTimeout(ProcessLister.inTimeout);
+			ProcessLister.inTimeout = setTimeout(function() {
+				tableObserver.observe(form, options);
+				ProcessLister._submit(url);
+			}, 250);
+		};
+
+		var renderButton = $("#ProcessLabChargeRenderButton");
+		renderButton.attr("disabled", true).addClass("ui-state-disabled");
+		renderButton.click(function () {
+			var data = {
+				ids : $("#ProcessLabChargeRecordsIds").attr('value')
+			};
+			$("#ProcessLabChargeRecordsSpinner").css('display', 'inline');
+			$.ajax({
+				url: "./render",
+				type: 'GET',
+				data: data,
+				success: updateRecordText,
+				error: recordError
+			});
+			return false;
+		});
+	}
 
   function insertCheckboxes (mutations) {
     var table = $("#ProcessListerTable > table > tbody");
@@ -64,30 +91,5 @@ $(document).ready(function() {
 		$("#ProcessLabChargeRecordsSpinner").css('display', 'none');
 		console.error(error);
 	};
-
-	ProcessLister.submit = function(url) {
-		if(ProcessLister.inTimeout) clearTimeout(ProcessLister.inTimeout);
-		ProcessLister.inTimeout = setTimeout(function() {
-			tableObserver.observe(form, options);
-			ProcessLister._submit(url);
-		}, 250);
-	};
-
-	var renderButton = $("#ProcessLabChargeRenderButton");
-	renderButton.attr("disabled", true).addClass("ui-state-disabled");
-	renderButton.click(function () {
-		var data = {
-			ids : $("#ProcessLabChargeRecordsIds").attr('value')
-		};
-		$("#ProcessLabChargeRecordsSpinner").css('display', 'inline');
-		$.ajax({
-			url: "./render",
-			type: 'GET',
-			data: data,
-			success: updateRecordText,
-			error: recordError
-		});
-		return false;
-	});
 
 });

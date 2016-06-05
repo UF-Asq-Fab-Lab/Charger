@@ -29,9 +29,9 @@ class ProcessLabCharge extends ProcessPageType {
 
 	public function __construct() {
 		$this->set("maxAjaxQty", 25);
-		$this->set('addLabel', $this->_('Create New Charge'));
+		$this->set('addLabel', 'Create New Charge');
 		$this->set('jsonListLabel', 'title'); // what to use for 'label' property in JSON nav data
-    $showFields = array('title', 'lab_charge_item', 'lab_charge_ufid', 'lab_charge_amount');
+	$showFields = array('title', 'lab_charge_item', 'lab_charge_ufid', 'lab_charge_amount', 'lab_charge_sent'/*, 'lab_charge_processed'*/);
 		$this->set('showFields', $showFields);
 	}
 
@@ -40,10 +40,54 @@ class ProcessLabCharge extends ProcessPageType {
 		$this->addHookAfter('ProcessPageLister::execute', $this, 'hookAfterListerExecute');
 		$this->addHookAfter('ProcessPageAdd::buildForm', $this, 'hookAfterPageAddBuildForm');
 		$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookAfterPageEditBuildForm');
+		// $this->addHook('LazyCron::everyDay', $this, 'hookCheckForProcessedRecords');
 	}
 
 	protected function useLister() {
 		return true;
+	}
+
+	public function ___execute() {
+		if($this->wire('input')->post('records-submit')){
+			$ids = explode("+", $this->wire('input')->post('records-ids'));
+			$idstr = implode("|", $ids);
+			$text = '';
+			$charges = $this->wire('pages')->find("id=".$idstr);
+			foreach ($charges as $charge) {
+				$text .= $this->renderDetailRecord($charge)."\n";
+				$charge->of(false);
+				$charge->set('lab_charge_sent', 1);
+				$charge->save();
+				$charge->of(true);
+			}
+			$text .= "\n".$this->renderTrailerRecord($charges);
+			// write text to file
+			$dir = $this->wire('config')->paths->assets.'charges/';
+			// input file names should be DCPSFAR.yyyymmdd.txt where yyyymmdd is today’s date
+			if(intval(date('G')) < 17){
+				$filename = "DCPSFAR.".date('Ymd').".txt";
+			} else {
+				$filename = "DCPSFAR.".date('Ymd', time()+(60*60*24)).".txt";
+			}
+
+			$filepath = $dir.$filename;
+			if (!is_dir($dir)) {
+			  // dir doesn't exist, make it
+			  mkdir($dir);
+			}
+			file_put_contents($filepath, $text);
+			// curl file to webdav server
+			$chargerConfig = $this->wire('modules')->getModuleConfigData('LabCharger');
+			$url = $chargerConfig['lab_charger_server_url'];
+			$path = $chargerConfig['lab_charger_server_incoming_path'];
+			$user = $chargerConfig['lab_charger_server_user'];
+			$pass = $chargerConfig['lab_charger_server_password'];
+			// $this->message("curl ".$url.$path." -u ".$user.":".$pass);
+			$response = $this->curlPutFile($user, $pass, $url, $path, $filepath, $filename);
+			// $this->message($response);
+		}
+		$out = parent::___execute();
+		return $out;
 	}
 
 	public function ___executeAdd() {
@@ -54,12 +98,6 @@ class ProcessLabCharge extends ProcessPageType {
 	public function ___executeEdit() {
 		$out = parent::___executeEdit();
 		return $out;
-	}
-
-	public function __executeSend() {
-		// get ids from input query
-		// construct charge record
-		// send to remote server
 	}
 
 	public function ___executeRender() {
@@ -96,6 +134,7 @@ class ProcessLabCharge extends ProcessPageType {
 		$field->attr('rows', 10);
 		$field->attr('id', 'ProcessLabChargeRecordsText');
 		$field->attr('name', 'records-text');
+		$field->attr('readonly', true);
 		$field->label = "Record File Text";
 		$form->add($field);
 
@@ -107,6 +146,7 @@ class ProcessLabCharge extends ProcessPageType {
 		$field = $this->wire('modules')->get('InputfieldSubmit');
 		$field->attr('value', "Send Charge Record");
 		$field->attr('id', 'ProcessLabChargeRecordsSubmit');
+		$field->attr('name', 'records-submit');
 		$field->icon = 'upload';
 		$form->add($field);
 
@@ -254,20 +294,39 @@ class ProcessLabCharge extends ProcessPageType {
 		return $settings;
 	}
 
-	private function testAuth ($user, $pass, $url, $path) {
+	private function curlPutFile ($user, $pass, $url, $path, $filepath, $destfile) {
+		$curl = curl_init();
+		$file = fopen($filepath, 'r');
+
+		$curl_options = [
+		CURLOPT_HTTPAUTH => CURLAUTH_ANY,
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_USERPWD => $user.":".$pass,
+		CURLOPT_URL => $url.$path.$destfile,
+		CURLOPT_HEADER => true,
+		CURLOPT_VERBOSE => true,
+		CURLOPT_PUT => true,
+		CURLOPT_INFILE => $file,
+		CURLOPT_INFILESIZE => filesize($filepath)
+		];
+		curl_setopt_array($curl, $curl_options);
+
+		$result = curl_exec($curl);
+		curl_close($curl);
+		fclose($file);
+		return $result;
+	}
+
+	private function curlGetFile ($user, $pass, $url, $path) {
 		$curl = curl_init();
 
 		$curl_options = [
 		CURLOPT_HTTPAUTH => CURLAUTH_ANY,
 		CURLOPT_RETURNTRANSFER => 1,
-		// #CURLOPT_USERPWD => 'user:passwd',
-		// #CURLOPT_URL => '
-		// http://httpbin.org/digest-auth/auth/user/passwd'
-		// ,
 		CURLOPT_USERPWD => $user.":".$pass,
 		CURLOPT_URL => $url.$path,
 		CURLOPT_HEADER => true,
-						CURLOPT_VERBOSE => true
+		CURLOPT_VERBOSE => true
 		];
 		curl_setopt_array($curl, $curl_options);
 

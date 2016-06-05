@@ -38,6 +38,13 @@ class LabChargerInstall extends Wire {
       'required' => 1,
       'tags' => 'Charger'
     );
+    $sentOptions = array(
+      'flags' => Field::flagAccessEditor,
+      'useRoles' => true,
+      'viewRoles' => array('superuser', 'admin', 'intern', 'assistant'),
+      'editRoles' => array('superuser', 'admin'),
+      'tags' => 'Charger'
+    );
     $lcif = $helper->getField(LabCharger::LabChargeItemFieldName, "FieldtypePage", $options);
     // create LabCharge page template
     $opt = array('tags'=>'Charger', 'datetimeFormat' => 'm/d/Y H:i:s');
@@ -49,7 +56,9 @@ class LabChargerInstall extends Wire {
       'lab_charge_ufid' => array('type'=>'FieldtypeText', 'options'=>$opt),
       'lab_charge_term' => array('type'=>'FieldtypeText', 'options'=>$opt),
       'lab_charge_due_date' => array('type'=>'FieldtypeDatetime', 'options'=>$opt),
-      'lab_charge_reversal' => array('type'=>'FieldtypeCheckbox', 'options'=>$opt)
+      'lab_charge_reversal' => array('type'=>'FieldtypeCheckbox', 'options'=>$opt),
+      'lab_charge_sent' => array('type'=>'FieldtypeCheckbox', 'options'=>$sentOptions)//,
+      //'lab_charge_processed' => array('type'=>'FieldtypeCheckbox', 'options'=>$sentOptions)
     );
     $templateOptions = array('noChildren' => 1, 'noSettings' => 1);
     $labChargeTemplate = $helper->getTemplate(LabCharger::LabChargeTemplateName, $lcf, 'Charger', $templateOptions);
