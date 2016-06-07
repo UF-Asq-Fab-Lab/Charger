@@ -70,7 +70,7 @@ class LabCharges extends PagesType {
 	 *
 	 */
 	public function ___updated(Page $labCharge, $what) {
-		$this->reloadLabCharges();
+		// $this->reloadLabCharges();
 		$this->message("Updated lab charge $labCharge->name ($what)", Notice::debug);
 	}
   //

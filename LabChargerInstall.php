@@ -17,17 +17,17 @@ class LabChargerInstall extends Wire {
     $helper = $this->modules->get('FabLabModuleHelpers');
 
     // create ProcessList page
-    $chargerPage = $helper->getAdminPage('lab_charger', 'ProcessList');
+    $chargerPage = $helper->getAdminPage('lab_charger', 'ProcessList', null, null);
 
     // create ProcessLabCharge page
     $labChargesPage = $helper->getAdminPage('lab_charges',
                                             'ProcessLabCharge',
-                                            $chargerPage->id);
+                                            $chargerPage->id, null);
 
     // create LabChargerItems page and process
     $labChargeItemsPage = $helper->getAdminPage('lab_charge_items',
                                             'ProcessLabChargeItem',
-                                            $chargerPage->id);
+                                            $chargerPage->id, null);
 
     // create lab_charge_item field
     $options = array(
