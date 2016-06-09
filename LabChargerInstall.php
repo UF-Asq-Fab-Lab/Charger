@@ -29,6 +29,12 @@ class LabChargerInstall extends Wire {
                                             'ProcessLabChargeItem',
                                             $chargerPage->id, null);
 
+    // create charger role and permission
+    $chargerPermission = $this->wire('permissions')->add('charger-edit');
+    $chargerRole = $this->wire('roles')->add('charger-admin');
+    $chargerRole->addPermission($chargerPermission);
+    $chargerRole->save();
+
     // create lab_charge_item field
     $options = array(
       'derefAsPage' => 1,
@@ -67,9 +73,25 @@ class LabChargerInstall extends Wire {
 
     // create LabChargeItem page template
     $opt = array('tags'=>'Charger', 'datetimeFormat' => 'm/d/Y H:i:s');
+    $trigOpt = array(
+      'tags' => 'Charger',
+      'description' => 'Use this field to provide the name of a php file to execute when a charge of this type is sent.',
+      'notes' => 'site/modules/LabCharger/triggers/<filename>.php (Do not include .php, that will be appended automatically).'
+    );
+    $amtOpt = array(
+      'tags' => 'Charger',
+      'description' => 'Charges of this type will be autopopulated with this as their default amount.',
+    );
+    $dueOpt = array(
+      'tags' => 'Charger',
+      'description' => 'Charges of this type will be autopopulated with a due date this many days after the current day.'
+    );
     $lcif = array(
       'title'=> array('type'=>'FieldtypeTitle', 'options'=>array()),
-      'lab_charge_item_type' => array('type'=>'FieldtypeText', 'options'=>$opt)
+      'lab_charge_item_type' => array('type'=>'FieldtypeText', 'options'=>$opt),
+      'lab_charge_item_trigger' => array('type'=>'FieldtypeText', 'options'=>$trigOpt),
+      'lab_charge_item_default_amount' => array('type'=>'FieldtypeText', 'options'=>$amtOpt),
+      'lab_charge_item_default_due_date_buffer' => array('type'=>'FieldtypeInteger', 'options'=>$dueOpt)
     );
     $labChargeItemTemplate = $helper->getTemplate(LabCharger::LabChargeItemTemplateName, $lcif, 'Charger', $templateOptions);
 

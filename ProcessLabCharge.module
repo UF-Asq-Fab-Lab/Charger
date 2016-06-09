@@ -23,6 +23,7 @@ class ProcessLabCharge extends ProcessPageType {
 			'permission' => 'user-admin',
 			'icon'       => 'credit-card',
       'requires'   => array('LabCharger'),
+			'permission' => 'charger-edit',
 			'useNavJSON' => true,
 		);
 	}
@@ -37,6 +38,8 @@ class ProcessLabCharge extends ProcessPageType {
 
 	public function init() {
 		parent::init();
+		$this->addHookBefore('ProcessPageAdd::execute', $this, 'hookBeforePageAddExecute');
+
 		$this->addHookAfter('ProcessPageLister::execute', $this, 'hookAfterListerExecute');
 		$this->addHookAfter('ProcessPageAdd::buildForm', $this, 'hookAfterPageAddBuildForm');
 		$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookAfterPageEditBuildForm');
@@ -55,6 +58,17 @@ class ProcessLabCharge extends ProcessPageType {
 			$charges = $this->wire('pages')->find("id=".$idstr);
 			foreach ($charges as $charge) {
 				$text .= $this->renderDetailRecord($charge)."\n";
+				$item = $charge->lab_charge_item;
+
+				if($trigger = $item->lab_charge_item_trigger){
+					$triggerPath = $this->wire('config')->paths->siteModules."/LabCharger/triggers/".$trigger.".php";
+					if(file_exists($triggerPath)){
+						include_once($triggerPath);
+					} else {
+						$this->message("Tried to include trigger at: ".$triggerPath.", but the file does not exist or is inaccessible.");
+					}
+				}
+
 				$charge->of(false);
 				$charge->set('lab_charge_sent', 1);
 				$charge->save();
@@ -91,8 +105,25 @@ class ProcessLabCharge extends ProcessPageType {
 	}
 
 	public function ___executeAdd() {
-		$out = parent::___executeAdd();
-		return $out;
+		$input = $this->wire('input');
+    if($this->wire('config')->ajax && $input->get("lciid")){
+      // get lab charge item
+      $labChargeItem = $this->wire('lab_charge_items')->get((int)$input->get("lciid"));
+      // send json object with default amount and due date buffer
+      if($labChargeItem->id){
+        $buffer = $labChargeItem->lab_charge_item_default_due_date_buffer;
+        $json = array(
+          "defaultAmount" => $labChargeItem->lab_charge_item_default_amount,
+          "defaultDueDate" => date("m/d/Y H:i:s", time()+($buffer*60*60*24))
+        );
+      } else {
+				$json = array("error"=>"No Lab Charge Item page with id ".$input->post("lciid")." found");
+			}
+      return json_encode($json);
+    } else {
+			$out = parent::___executeAdd();
+			return $out;
+		}
 	}
 
 	public function ___executeEdit() {
@@ -110,6 +141,11 @@ class ProcessLabCharge extends ProcessPageType {
 		}
 		$out .= "\n".$this->renderTrailerRecord($charges);
 		return $out;
+	}
+
+	protected function hookBeforePageAddExecute(HookEvent $event) {
+		$incurl = $this->config->urls->siteModules."LabCharger/includes/";
+		$this->wire('config')->scripts->add($incurl."js/LabCharger.js");
 	}
 
 	protected function hookAfterListerExecute(HookEvent $event){
@@ -156,6 +192,7 @@ class ProcessLabCharge extends ProcessPageType {
 	}
 
 	protected function hookAfterPageAddBuildForm(HookEvent $event){
+		$data = $this->wire('modules')->getModuleConfigData('LabCharger');
 		$form = $event->return;
 		$formSave = $form->children('name=submit_save')->first();
 		// item

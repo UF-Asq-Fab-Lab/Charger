@@ -23,6 +23,7 @@ class ProcessLabChargeItem extends ProcessPageType {
 			'permission' => 'user-admin',
 			'icon'       => 'cubes',
       'requires'   => array('LabCharger'),
+			'permission' => 'charge-edit',
 			'useNavJSON' => true,
 		);
 	}
