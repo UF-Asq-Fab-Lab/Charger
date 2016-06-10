@@ -23,6 +23,7 @@ class LabCharge extends Page {
 	 */
 	public function __construct(Template $tpl = null) {
 		if(is_null($tpl)) $tpl = $this->wire('templates')->get('lab_charge');
+    if(!$this->parent_id) $this->set('parent_id', $this->wire('modules')->getModuleConfigData("LabCharger")['lab_charges_id']);
 		parent::__construct($tpl);
 	}
 

@@ -3,6 +3,21 @@ $(document).ready(function() {
 		var tableObserver = new MutationObserver(insertCheckboxes);
 	  var form = document.getElementById("ProcessListerResults");
 	  var options = {childList: true, subtree: true};
+		var selectAllCheckbox = $("<input id='lab_charger_select_all' type='checkbox'/>");
+		var selectAllLabel = $("<label id='lab_charger_select_all_label'>Select All</label>");
+		selectAllCheckbox.click(function(){
+			if($(this).attr("checked")){
+				$("#lab_charger_select_all_label").text('Deselect All');
+				$(".lab_charger_selector_checkbox").attr("checked", true).change();
+			} else {
+				$("#lab_charger_select_all_label").text('Select All');
+				$(".lab_charger_selector_checkbox").attr("checked", false).change();
+			}
+
+		});
+		var labChargeControl = $("<div id='ProcessLabChargeControl'></div>");
+		labChargeControl.append(selectAllLabel, selectAllCheckbox);
+		$("#ProcessListerResults").before(labChargeControl);
 
 		ProcessLister.submit = function(url) {
 			if(ProcessLister.inTimeout) clearTimeout(ProcessLister.inTimeout);
@@ -11,6 +26,9 @@ $(document).ready(function() {
 				ProcessLister._submit(url);
 			}, 250);
 		};
+
+		var duplicateButton = $("#ProcessLabChargeDuplicateButton");
+		duplicateButton.attr("disabled", true).addClass("ui-state-disabled");
 
 		var renderButton = $("#ProcessLabChargeRenderButton");
 		renderButton.attr("disabled", true).addClass("ui-state-disabled");
@@ -57,26 +75,41 @@ $(document).ready(function() {
 
 	function updateRenderInputs () {
 		var checked = $(".lab_charger_selector_checkbox:checked");
-		// update button
+		// update buttons
 		if( checked.length > 0 ){
+
 			$("#ProcessLabChargeRenderButton")
 			.attr("disabled", null)
 			.removeClass("ui-state-disabled");
+
+			$("#ProcessLabChargeDuplicateButton")
+			.attr("disabled", null)
+			.removeClass("ui-state-disabled");
+
 		} else {
+
 			$("#ProcessLabChargeRenderButton")
 			.attr("disabled", true)
 			.addClass("ui-state-disabled");
+
+			$("#ProcessLabChargeDuplicateButton")
+			.attr("disabled", true)
+			.addClass("ui-state-disabled");
+
 		}
 		// update ids field
 		var idsInput = $("#ProcessLabChargeRecordsIds");
+		var dupIdsInput = $("#ProcessLabChargeDuplicateIds");
 		if( checked.length > 0 ) {
 			var val = "";
 			checked.each(function(i, element){
 				val+="+"+element.id;
 			});
 			idsInput.attr('value', val);
+			dupIdsInput.attr('value', val);
 		} else {
 			idsInput.attr('value', "");
+			dupIdsInput.attr('value', "");
 		}
 	};
 

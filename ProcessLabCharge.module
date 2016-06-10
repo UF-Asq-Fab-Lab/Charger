@@ -51,6 +51,33 @@ class ProcessLabCharge extends ProcessPageType {
 	}
 
 	public function ___execute() {
+		if($this->wire('input')->post('duplicate-submit')){
+			$ids = explode("+", $this->wire('input')->post('duplicate-ids'));
+			$idstr = implode("|", $ids);
+			$charges = $this->wire('pages')->find("id=".$idstr);
+			foreach ($charges as $charge) {
+				$dupCharge = new LabCharge();
+				$chargeUser = $this->wire('users')->get("lab_user_ufid=".$charge->lab_charge_ufid);
+				$chargeItem = $charge->lab_charge_item;
+				$buffer = $chargeItem->lab_charge_item_default_due_date_buffer;
+				$dupCharge->title = $chargeUser->lab_user_first_name." ".$chargeUser->lab_user_last_name." ".$chargeItem->title." ".date('m/d/Y H:i:s');
+				$dupCharge->lab_charge_ufid = $charge->lab_charge_ufid;
+				$dupCharge->lab_charge_item = $chargeItem;
+				$dupCharge->lab_charge_amount = $charge->lab_charge_amount;
+				$dupCharge->lab_charge_term = $this->getCurrentTerm();
+				$dupCharge->lab_charge_sent = 0;
+				$dupCharge->lab_charge_due_date = date('m/d/Y H:i:s', time()+($buffer*24*60*60));
+				if($this->wire('input')->post('duplicate-reversal')){
+					$dupCharge->title = $dupCharge->title."(reversal)";
+					$dupCharge->lab_charge_reversal = 1;
+					$dupCharge->lab_charge_reference_number = $charge->lab_charge_reference_number;
+				} else {
+					$dupCharge->lab_charge_reversal = 0;
+					$dupCharge->lab_charge_reference_number = $this->getNextReferenceNumber();
+				}
+				$dupCharge->save();
+			}
+		}
 		if($this->wire('input')->post('records-submit')){
 			$ids = explode("+", $this->wire('input')->post('records-ids'));
 			$idstr = implode("|", $ids);
@@ -106,20 +133,37 @@ class ProcessLabCharge extends ProcessPageType {
 
 	public function ___executeAdd() {
 		$input = $this->wire('input');
-    if($this->wire('config')->ajax && $input->get("lciid")){
-      // get lab charge item
-      $labChargeItem = $this->wire('lab_charge_items')->get((int)$input->get("lciid"));
-      // send json object with default amount and due date buffer
-      if($labChargeItem->id){
-        $buffer = $labChargeItem->lab_charge_item_default_due_date_buffer;
-        $json = array(
-          "defaultAmount" => $labChargeItem->lab_charge_item_default_amount,
-          "defaultDueDate" => date("m/d/Y H:i:s", time()+($buffer*60*60*24))
-        );
-      } else {
-				$json = array("error"=>"No Lab Charge Item page with id ".$input->post("lciid")." found");
+    if($this->wire('config')->ajax){
+			if($input->get("lciid")){
+				// get lab charge item
+				$labChargeItem = $this->wire('lab_charge_items')->get((int)$input->get("lciid"));
+				// send json object with default amount and due date buffer
+				if($labChargeItem->id){
+					$buffer = $labChargeItem->lab_charge_item_default_due_date_buffer;
+					$json = array(
+						"defaultAmount" => $labChargeItem->lab_charge_item_default_amount,
+						"defaultDueDate" => date("m/d/Y H:i:s", time()+($buffer*60*60*24))
+					);
+				} else {
+					$json = array("error"=>"No Lab Charge Item page with id ".$input->post("lciid")." found");
+				}
+				return json_encode($json);
+			} else if($input->get("check_ufid")){
+				// get user
+				$user = $this->wire('users')->get("lab_user_ufid=".$input->get('check_ufid'));
+				// send user info
+				if($user->id){
+					$json = array(
+						"exists" => true,
+						"name" => $user->name,
+						"email" => $user->email,
+						"roles" => $user->roles->implode(", ", "name")
+					);
+				} else {
+					$json = array("exists" => false);
+				}
+				return json_encode($json);
 			}
-      return json_encode($json);
     } else {
 			$out = parent::___executeAdd();
 			return $out;
@@ -145,12 +189,37 @@ class ProcessLabCharge extends ProcessPageType {
 
 	protected function hookBeforePageAddExecute(HookEvent $event) {
 		$incurl = $this->config->urls->siteModules."LabCharger/includes/";
-		$this->wire('config')->scripts->add($incurl."js/LabCharger.js");
+		$this->wire('config')->styles->add($incurl."css/AddLabCharge.css");
+		$this->wire('config')->scripts->add($incurl."js/AddLabCharge.js");
 	}
 
 	protected function hookAfterListerExecute(HookEvent $event){
 
 		if($this->wire('config')->ajax) return $event->return;
+
+		$dupform = $this->wire('modules')->get('InputfieldForm');
+		$dupform->attr('id', 'ProcessLabChargeDuplicateForm');
+		$dupform->method = 'post';
+		$dupform->action = './';
+
+		$field = $this->wire('modules')->get('InputfieldHidden');
+		$field->attr('id', 'ProcessLabChargeDuplicateIds');
+		$field->attr('name', 'duplicate-ids');
+		$dupform->add($field);
+
+		$dupbtn = $this->wire('modules')->get('InputfieldSubmit');
+		$dupbtn->attr('id', 'ProcessLabChargeDuplicateButton');
+		$dupbtn->attr('value', 'Duplicate Selected Charges');
+		$dupbtn->attr('value', 'Duplicate Selected Charges');
+		$dupbtn->attr('name', 'duplicate-submit');
+		$dupbtn->icon = 'copy';
+		$dupform->add($dupbtn);
+
+		$field = $this->wire('modules')->get('InputfieldCheckbox');
+		$field->attr('id', 'ProcessLabChargeDuplicateReversal');
+		$field->attr('name', 'duplicate-reversal');
+		$field->setAttribute('label2', 'Duplicate as Reversal?');
+		$dupform->add($field);
 
 		$btn = $this->wire('modules')->get('InputfieldButton');
 		$btn->attr('id', 'ProcessLabChargeRenderButton');
@@ -186,7 +255,7 @@ class ProcessLabCharge extends ProcessPageType {
 		$field->icon = 'upload';
 		$form->add($field);
 
-		$out = "<div class='ProcessLabChargeRecords'>".$btn->render().$spinner.$form->render()."</div>";
+		$out = "<div class='ProcessLabChargeRecords'>".$btn->render().$spinner.$dupform->render().$form->render()."</div>";
 
 		$event->return = $out.$event->return;
 	}

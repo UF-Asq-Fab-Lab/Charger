@@ -16,10 +16,32 @@
   display: none;
 }
 
-#ProcessLabChargeRenderButton {
+#ProcessLabChargeRenderButton{
   margin-bottom: 10px;
 }
 
 .ProcessLabChargeRecords {
   margin-bottom: 10px;
+}
+
+#ProcessLabChargeControl {
+  padding: 20px;
+  clear: both;
+  position: relative;
+  height: auto;
+}
+
+#ProcessLabChargeControl > label {
+  display: block;
+  /*float: left;*/
+  width: 100%;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  color: #51739d;
+  font-weight: bold;
+  font-family: "Helvetica Neue",Arial,sans-serif;
+}
+
+#ProcessLabChargeControl > input {
+  /*float: left;*/
 }

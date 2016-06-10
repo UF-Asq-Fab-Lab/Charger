@@ -1,0 +1,4 @@
+.lab_charge_ufid_exists, .lab_charge_ufid_dne {
+  display: none;
+  height: 50px;
+}
