@@ -66,7 +66,7 @@ class LabChargerInstall extends Wire {
       'lab_charge_sent' => array('type'=>'FieldtypeCheckbox', 'options'=>$sentOptions)//,
       //'lab_charge_processed' => array('type'=>'FieldtypeCheckbox', 'options'=>$sentOptions)
     );
-    $templateOptions = array('noChildren' => 1, 'noSettings' => 1);
+    $templateOptions = array('noChildren' => 1, 'noSettings' => 1, 'noUnpublish' => 1);
     $labChargeTemplate = $helper->getTemplate(LabCharger::LabChargeTemplateName, $lcf, 'Charger', $templateOptions);
 
 
@@ -76,7 +76,7 @@ class LabChargerInstall extends Wire {
     $trigOpt = array(
       'tags' => 'Charger',
       'description' => 'Use this field to provide the name of a php file to execute when a charge of this type is sent.',
-      'notes' => 'site/modules/LabCharger/triggers/<filename>.php (Do not include .php, that will be appended automatically).'
+      'note' => 'Trigger files should be placed in site/modules/LabCharger/triggers/<filename>.php (Do not include .php, that will be appended automatically).'
     );
     $amtOpt = array(
       'tags' => 'Charger',

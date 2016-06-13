@@ -55,13 +55,16 @@ $(document).ready(function() {
 
         if(!$(element).children().has(".lab_charger_selector_checkbox_td").length){
           var a = $(element).children().first();
-					var id = $(a).children().first().attr('id').slice(4);
-          var boxTd = $("<td class='lab_charger_selector_checkbox_td'></td>");
-          var box = $("<input type='checkbox' class='lab_charger_selector_checkbox'/>");
-          box.attr('id', id);
-					box.change(updateRenderInputs);
-          boxTd.append(box);
-          $(element).prepend(boxTd);
+					var id = $(a).children().first().attr('id');
+					if(id){
+						id = id.slice(4);
+	          var boxTd = $("<td class='lab_charger_selector_checkbox_td'></td>");
+	          var box = $("<input type='checkbox' class='lab_charger_selector_checkbox'/>");
+	          box.attr('id', id);
+						box.change(updateRenderInputs);
+	          boxTd.append(box);
+	          $(element).prepend(boxTd);
+					}
         }
 
       });
@@ -85,6 +88,16 @@ $(document).ready(function() {
 			$("#ProcessLabChargeDuplicateButton")
 			.attr("disabled", null)
 			.removeClass("ui-state-disabled");
+
+			$.each(checked, function(i, box){
+				var sent = $(box).parent().nextAll().has("i").children("i");
+				console.log(sent.attr("class"));
+				if(sent.attr("class") === 'fa fa-check-square-o'){
+					$("#ProcessLabChargeRenderButton")
+					.attr("disabled", true)
+					.addClass("ui-state-disabled");
+				}
+			});
 
 		} else {
 

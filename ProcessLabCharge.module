@@ -90,7 +90,7 @@ class ProcessLabCharge extends ProcessPageType {
 				if($trigger = $item->lab_charge_item_trigger){
 					$triggerPath = $this->wire('config')->paths->siteModules."/LabCharger/triggers/".$trigger.".php";
 					if(file_exists($triggerPath)){
-						include_once($triggerPath);
+						include($triggerPath);
 					} else {
 						$this->message("Tried to include trigger at: ".$triggerPath.", but the file does not exist or is inaccessible.");
 					}
@@ -142,7 +142,8 @@ class ProcessLabCharge extends ProcessPageType {
 					$buffer = $labChargeItem->lab_charge_item_default_due_date_buffer;
 					$json = array(
 						"defaultAmount" => $labChargeItem->lab_charge_item_default_amount,
-						"defaultDueDate" => date("m/d/Y H:i:s", time()+($buffer*60*60*24))
+						"defaultDueDate" => date("m/d/Y H:i:s", time()+($buffer*60*60*24)),
+						"itemName" => $labChargeItem->title
 					);
 				} else {
 					$json = array("error"=>"No Lab Charge Item page with id ".$input->post("lciid")." found");
@@ -155,7 +156,7 @@ class ProcessLabCharge extends ProcessPageType {
 				if($user->id){
 					$json = array(
 						"exists" => true,
-						"name" => $user->name,
+						"name" => $user->lab_user_first_name." ".$user->lab_user_last_name,
 						"email" => $user->email,
 						"roles" => $user->roles->implode(", ", "name")
 					);
@@ -263,28 +264,28 @@ class ProcessLabCharge extends ProcessPageType {
 	protected function hookAfterPageAddBuildForm(HookEvent $event){
 		$data = $this->wire('modules')->getModuleConfigData('LabCharger');
 		$form = $event->return;
-		$formSave = $form->children('name=submit_save')->first();
+		$formTitle = $form->children('name=title')->first();
 		// item
 		$field = $this->wire('fields')->get('lab_charge_item')->getInputfield(new NullPage());
-		$form->insertBefore($field, $formSave);
+		$form->insertBefore($field, $formTitle);
 		// amount
 		$field = $this->wire('fields')->get('lab_charge_amount')->getInputfield(new NullPage());
-		$form->insertBefore($field, $formSave);
+		$form->insertBefore($field, $formTitle);
 		// ufid
 		$field = $this->wire('fields')->get('lab_charge_ufid')->getInputfield(new NullPage());
-		$form->insertBefore($field, $formSave);
+		$form->insertBefore($field, $formTitle);
 		// ref
 		$field = $this->wire('fields')->get('lab_charge_reference_number')->getInputfield(new NullPage());
 		$field->value = $this->getNextReferenceNumber();
-		$form->insertBefore($field, $formSave);
+		$form->insertBefore($field, $formTitle);
 		// term
 		$field = $this->wire('fields')->get('lab_charge_term')->getInputfield(new NullPage());
 		$field->value = $this->getCurrentTerm();
-		$form->insertBefore($field, $formSave);
+		$form->insertBefore($field, $formTitle);
 		// due date
 		$field = $this->wire('fields')->get('lab_charge_due_date')->getInputfield(new NullPage());
 		$field->value = $this->getDueDate();
-		$form->insertBefore($field, $formSave);
+		$form->insertBefore($field, $formTitle);
 
 		$event->return = $form;
 	}
