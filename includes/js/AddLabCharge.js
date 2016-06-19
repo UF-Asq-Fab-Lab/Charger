@@ -98,7 +98,9 @@ $(document).ready(function(){
     })
   };
 
-  var fromUser = location.search.match(/from_user=(\d+)/)[1];
-  $("input[name='lab_charge_ufid']").val(fromUser).keyup();
+  var fromUser = location.search.match(/from_user=(\d+)/);
+  if(fromUser != null){
+    $("input[name='lab_charge_ufid']").val(fromUser[1]).keyup();
+  }
 
 });

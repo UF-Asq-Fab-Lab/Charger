@@ -56,7 +56,7 @@ class LabCharger extends WireData implements Module, ConfigurableModule {
       $lcp = $this->wire('pages')->get($selector);
       $this->labChargesPageID = $lcp->id;
     }
-    $lab_charges = new LabCharges($labChargeTemplate, $this->labChargesPageID);
+    $lab_charges = new LabCharges($this->wire, $labChargeTemplate, $this->labChargesPageID);
     $this->wire('lab_charges', $lab_charges);
 
     // create $lab_charge_items API variable.
@@ -67,7 +67,7 @@ class LabCharger extends WireData implements Module, ConfigurableModule {
       $lcip = $this->wire('pages')->get($selector);
       $this->labChargeItemsPageID = $lcip->id;
     }
-    $lab_charge_items = new LabChargeItems($labChargeItemTemplate, $this->labChargeItemsPageID);
+    $lab_charge_items = new LabChargeItems($this->wire, $labChargeItemTemplate, $this->labChargeItemsPageID);
     $this->wire('lab_charge_items', $lab_charge_items);
 
   }
